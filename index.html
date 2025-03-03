@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>六官六部连线游戏</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>六官六部连线游戏</h1>
+    <div class="game">
+        <div class="column" id="left"></div>
+        <div class="column" id="middle"></div>
+        <div class="column" id="right"></div>
+    </div>
+    <p id="message"></p>
+    <button id="resetButton">重置</button>
+</div>
+
+<script>
+    const correctPairs = {
+        "冢宰": { middle: "吏部", right: "天", message: "吏勋封考，三婆两嫂" },
+        "司徒": { middle: "户部", right: "地", message: "户度金仓，细酒肥羊" },
+        "宗伯": { middle: "礼部", right: "春", message: "礼祠主膳，淡吃虀面" },
+        "司马": { middle: "兵部", right: "夏", message: "兵职驾库，咬姜呷醋" },
+        "司寇": { middle: "刑部", right: "秋", message: "刑都比门，人肉馄饨" },
+        "司空": { middle: "工部", right: "冬", message: "工屯虞水，生身饿鬼" }
+    };
+
+    let selected = {};
+    let completed = new Set();
+    const messageBox = document.getElementById("message");
+    const leftColumn = document.getElementById("left");
+    const middleColumn = document.getElementById("middle");
+    const rightColumn = document.getElementById("right");
+
+    function shuffleArray(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function initializeGame() {
+        leftColumn.innerHTML = "";
+        middleColumn.innerHTML = "";
+        rightColumn.innerHTML = "";
+
+        const leftItems = shuffleArray(Object.keys(correctPairs));
+        const middleItems = shuffleArray(["吏部", "户部", "礼部", "兵部", "刑部", "工部"]);
+        const rightItems = shuffleArray(["天", "地", "春", "夏", "秋", "冬"]);
+
+        leftItems.forEach(text => createDraggableItem(leftColumn, text));
+        middleItems.forEach(text => createDroppableItem(middleColumn, text));
+        rightItems.forEach(text => createDroppableItem(rightColumn, text));
+    }
+
+    function createDraggableItem(parent, text) {
+        const div = document.createElement("div");
+        div.className = "draggable";
+        div.draggable = true;
+        div.dataset.key = text;
+        div.textContent = text;
+        div.addEventListener("dragstart", (event) => {
+            event.dataTransfer.setData("text", text);
+        });
+        parent.appendChild(div);
+    }
+
+    function createDroppableItem(parent, text) {
+        const div = document.createElement("div");
+        div.className = "droppable";
+        div.dataset.key = text;
+        div.textContent = text;
+        div.addEventListener("dragover", (event) => {
+            event.preventDefault();
+        });
+        div.addEventListener("drop", handleDrop);
+        parent.appendChild(div);
+    }
+
+    function handleDrop(event) {
+        event.preventDefault();
+        const draggedKey = event.dataTransfer.getData("text");
+        const dropKey = event.target.dataset.key;
+
+        // 如果该位置已经被连错，则不能再尝试
+        if (event.target.classList.contains("locked")) {
+            return;
+        }
+
+        if (!selected[draggedKey]) {
+            selected[draggedKey] = {};
+        }
+
+        if (Object.values(correctPairs[draggedKey] || {}).includes(dropKey)) {
+            let position = Object.keys(correctPairs[draggedKey]).find(k => correctPairs[draggedKey][k] === dropKey);
+            selected[draggedKey][position] = dropKey;
+            event.target.textContent = dropKey;
+            event.target.style.backgroundColor = "lightgreen";
+            event.target.setAttribute("data-connected", draggedKey);
+        } else {
+            event.target.textContent = dropKey;
+            event.target.style.backgroundColor = "red";
+            event.target.classList.add("locked");  // 错误的地方被锁定
+            return;
+        }
+
+        checkCompletion();
+    }
+
+    function checkCompletion() {
+        messageBox.innerHTML = "";
+        completed.clear();
+
+        Object.keys(correctPairs).forEach(key => {
+            if (selected[key]?.middle === correctPairs[key].middle && selected[key]?.right === correctPairs[key].right) {
+                completed.add(key);
+                messageBox.innerHTML += `<p>${correctPairs[key].message}</p>`;
+            }
+        });
+
+        if (completed.size === Object.keys(correctPairs).length) {
+            messageBox.innerHTML += `<p><strong>恭喜您达成成就：学历史一个月要饭三碗</strong></p>`;
+        }
+    }
+
+    function resetGame() {
+        selected = {};
+        completed.clear();
+        messageBox.innerHTML = "";
+        initializeGame();
+    }
+
+    document.getElementById("resetButton").addEventListener("click", resetGame);
+
+    initializeGame();
+</script>
+
+<style>
+    .container {
+        text-align: center;
+        margin-top: 20px;
+    }
+    .game {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+    .column {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .draggable, .droppable {
+        padding: 10px;
+        border: 1px solid black;
+        cursor: pointer;
+        text-align: center;
+    }
+    .droppable[data-connected] {
+        pointer-events: none;
+    }
+    .droppable.locked {
+        pointer-events: none; /* 错误的地方无法再尝试 */
+        opacity: 0.6;
+    }
+</style>
+</body>
+</html>

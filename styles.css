@@ -1,0 +1,38 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f4f4f4;
+}
+.container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.game {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+.column {
+    width: 30%;
+    padding: 10px;
+}
+.draggable, .droppable {
+    padding: 10px;
+    margin: 10px;
+    background-color: #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.draggable {
+    background-color: #ffcc80;
+}
+.droppable {
+    background-color: #90caf9;
+}
+.correct {
+    background-color: #a5d6a7 !important;
+}
